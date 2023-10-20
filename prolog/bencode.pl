@@ -93,6 +93,13 @@ test(dictionary_longer) :-
             ],
             `d9:publisher3:bob17:publisher-webpage15:www.example.com18:publisher.location4:homee`
            ).
+test(dictionary_nested) :-
+    bencode([spam-[a-b,c-d]], `d4:spamd1:a1:b1:c1:dee`).
+test(dictionary_nested_broken_encode) :-
+    catch(bencode([spam-[a-b,c]], _), error(E, _), true),
+    E =@= type_error(pair, c).
+test(dictionary_nested_broken_decode, [fail]) :-
+    bencode(_, `d4:spamd1:a1:b1:cee`).
 
 test(dictionary_integer_key, [fail]) :-
     bencode([5-spam], `di5e4:spame`).
