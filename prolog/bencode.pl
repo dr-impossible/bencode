@@ -12,6 +12,13 @@
 bencode(Term, Codes) :-
     phrase(bval(Term), Codes).
 
+bstring(Atom) -->
+    { freeze(Atom, atom(Atom)) },
+    { when(ground(Atom);ground(Bytes), atom_codes(Atom,Bytes)) },
+    { when(ground(Bytes);ground(Length), length(Bytes,Length)) },
+    integer(Length), ":", Bytes,
+    !.
+
 bval(I) -->
     { freeze(I, integer(I)) },
     "i", integer(I), "e",
@@ -20,11 +27,9 @@ bval(L) -->
     "l", bvals(L), "e",
     !.
 bval(Atom) -->
-    { freeze(Atom, atom(Atom)) },
-    { when(ground(Atom);ground(Bytes), atom_codes(Atom,Bytes)) },
-    { when(ground(Bytes);ground(Length), length(Bytes,Length)) },
-    integer(Length), ":", Bytes,
+    bstring(Atom),
     !.
+
 bval(Dict) -->
     { when(ground(Dict), keys_sorted(Dict)) },
     "d",
@@ -34,7 +39,7 @@ bval(Dict) -->
 bvals([X|Xs]) --> bval(X), bvals(Xs), !.
 bvals([]) --> "".
 
-bpairs([K-V|Pairs]) --> bval(K), bval(V), bpairs(Pairs), !.
+bpairs([K-V|Pairs]) --> bstring(K), bval(V), bpairs(Pairs), !.
 bpairs([]) --> "".
 
 keys_sorted(L) :-
@@ -88,5 +93,10 @@ test(dictionary_longer) :-
             ],
             `d9:publisher3:bob17:publisher-webpage15:www.example.com18:publisher.location4:homee`
            ).
+
+test(dictionary_integer_key, [fail]) :-
+    bencode([5-spam], `di5e4:spame`).
+test(dictionary_list_key, [fail]) :-
+    bencode([[a,b]-spam], `dl1:a1:be4:spame`).
 
 :- end_tests(bencode).
